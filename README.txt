@@ -5,12 +5,9 @@ Django Dropbox Backup
 This is a Django app that provides management commands to help backup and
 restore your project database to Dropbox.
 
-To install run: "python setup.py install"
-
-
-REQUIREMENTS
-------------
-* Dropbox Python SDK installed (see: http://dropbox.com/developers).
+WARNING: Running 'dbrestore' will delete your current datatabase.  Do not
+attempt to run this command if you are not sure that you already have a
+valid backup file.
 
 
 OVERVIEW

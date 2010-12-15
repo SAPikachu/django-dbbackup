@@ -11,8 +11,7 @@ Required Settings:
 from django.conf import settings
 
 CONFIG = {
-    # Required Dropbox Settings
-    # Most of these were supplied by the APIs from Dropbox.com
+    # Required Settings
     'consumer_key': settings.DROPBOX_CONSUMER_KEY,
     'consumer_secret': settings.DROPBOX_CONSUMER_SECRET,
     'backup_auth_username': settings.DBBACKUP_AUTH_USERNAME,

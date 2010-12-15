@@ -37,10 +37,8 @@ REQUIRED SETTINGS
 -----------------
 DROPBOX_CONSUMER_KEY    - The Consumer Key provided to you by Dropbox.
 DROPBOX_CONSUMER_SECRET - The Consumer Secret provided to you by Dropbox.
-DBBACKUP_AUTH_USERNAME  - The local Django username to store Dropbox
-                          credentials for. This should most likely be the
-                          superuser account that is administering the
-                          databases.
+DBBACKUP_TOKEN_FILEPATH - The local filepath to store Dropbox oAuth request
+                          and access tokens.
 
 
 OPTIONAL DBBACKUP SETTINGS

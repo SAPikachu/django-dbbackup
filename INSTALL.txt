@@ -22,10 +22,11 @@ INSTALL
 3.) Add 'dbbackup' to INSTALLED_APPS in your Django settings.py file.
 
 4.) Add the three required settings DROPBOX_CONSUMER_KEY,
-    DROPBOX_CONSUMER_SECRET and DBBACKUP_AUTH_USERNAME to your Django
+    DROPBOX_CONSUMER_SECRET and DBBACKUP_TOKEN_FILEPATH to your Django
     settings.py file.  The secret and key variables are provided to within the
-    options for your newly created Dropbox application.  The auth username
-    setting should be the Django username of your website administrator.
+    options for your newly created Dropbox application.  The token filepath
+    is the local location to store Dropbox oAuth tokens.
+    (I set DBBACKUP_TOKEN_FILEPATH = '<PROJECT_ROOT>/dbbackup.tokens')
     
 5.) You can now run the command "./manage.py dbbackup".  The first time you
     run this command you will be prompted verify your account by visiting a

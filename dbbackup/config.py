@@ -15,12 +15,11 @@ CONFIG = {
     # Most of these were supplied by the APIs from Dropbox.com
     'consumer_key': settings.DROPBOX_CONSUMER_KEY,
     'consumer_secret': settings.DROPBOX_CONSUMER_SECRET,
-    'verifier': settings.DROPBOX_VERIFIER,
     'backup_auth_username': settings.DBBACKUP_AUTH_USERNAME,
     
     # Optional Backup & Restore Options
     'backup_localwork_dir': getattr(settings, 'DBBACKUP_LOCALWORK_DIR', "/tmp/"),
-    'backup_remote_dir': getattr(settings, 'DBBACKUP_REMOTE_DIR', "/Backups/"),
+    'backup_remote_dir': getattr(settings, 'DBBACKUP_REMOTE_DIR', "/django-dbbackups/"),
     'backup_server_name': getattr(settings, 'DBBACKUP_SERVER_NAME', ""),
     'backup_date_format': getattr(settings, 'DBBACKUP_DATE_FORMAT', "%Y-%m-%d-%H%M%S"),
     'backup_filename': getattr(settings, 'DBBACKUP_FILENAME', "{databasename}-{servername}-{datetime}.db"),
@@ -44,6 +43,7 @@ CONFIG = {
     
     # Optional Dropbox Settings
     # Don't change these unless you know what you're doing.
+    'verifier': getattr(settings, 'DROPBOX_VERIFIER', ''),
     'server': getattr(settings, 'DROPBOX_SERVER', 'api.dropbox.com'),
     'content_server': getattr(settings, 'DROPBOX_CONTENT_SERVER', 'api-content.dropbox.com'),
     'port': getattr(settings, 'DROPBOX_PORT', 80),

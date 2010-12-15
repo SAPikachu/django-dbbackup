@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Komodo Project File - DO NOT EDIT -->
+<project id="dd4993e6-af23-4e6e-9cb2-76f573a0318a" kpf_version="5" name="django-dbbackup.komodoproject">
+<preference-set idref="dd4993e6-af23-4e6e-9cb2-76f573a0318a">
+  <boolean id="import_live">1</boolean>
+</preference-set>
+</project>

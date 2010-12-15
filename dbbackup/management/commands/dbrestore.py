@@ -4,17 +4,14 @@ See __init__.py for a list of options.
 """
 import os
 import sys
-import subprocess
+import tempfile
+from ... import utils
+from ...config import CONFIG
 from django.conf import settings
-from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
 from django.core.management.base import LabelCommand
 from django.db import connection
 from optparse import make_option
-from ... import utils
-from ...config import CONFIG
-from ...models import UserToken
-from ...models import DropboxNotAuthorized
 
 
 class Command(LabelCommand):
@@ -28,7 +25,7 @@ class Command(LabelCommand):
     
     def handle(self, **options):
         """ Django command handler. """
-        client = self._get_dropbox_client()
+        client = utils.get_dropbox_client()
         if (options.get('servername') != None):
             CONFIG['backup_server_name'] = options['servername']
         # Get the Database settings to restore to
@@ -39,51 +36,34 @@ class Command(LabelCommand):
             databaseKey = settings.DATABASES.keys()[0]
         database = settings.DATABASES[databaseKey]
         # Restore the database
-        fileName = self._get_backup_filename(options, client, database)
-        self._restore_backup(fileName, client, database)
-        
-    def _get_dropbox_client(self):
-        """ Create and return a dropbox client. """
-        try:
-            print "Connecting to Dropbox"
-            user = User.objects.get(username=CONFIG['backup_auth_username'])
-            return UserToken.get_dropbox_client(user)
-        except DropboxNotAuthorized, e:
-            print "Account not Authorized."
-            print "Please visit the following URL to active your account:"
-            print e.url
-            sys.exit(1)
+        print "Restoring backup for database: %s" % database['NAME']
+        filename = options['filename'] or self.get_latest_filename(client, database)
+        self.restore_backup(filename, client, database)
             
-    def _get_backup_filename(self, options, client, database):
-        """ Return the dropbox backupPath to restore from. """
-        if (options.get('filename')):
-            fileName = options['filename']
-        else:
-            print "Finding latest backup"
-            response = client.metadata(CONFIG['root'], CONFIG['backup_remote_dir'])
-            assert response.http_response.status == 200
-            backupPaths = utils.filter_backups(response.data['contents'], database)
-            if (not backupPaths):
-                sys.exit("No backups for database '%s' exist in: %s" % (database['NAME'], CONFIG['backup_remote_dir']))
-            fileName = os.path.basename(sorted(backupPaths)[-1])
-        print "  Restoring file: %s" % fileName
+    def get_latest_filename(self, client, database):
+        """ Return the latest filename in dropbox for backup. """
+        print "  Finding latest backup"
+        response = client.metadata(CONFIG['root'], CONFIG['backup_remote_dir'])
+        assert response.http_response.status == 200
+        backupPaths = utils.filter_backups(response.data['contents'], database)
+        if (not backupPaths):
+            sys.exit("No backups for '%s-%s' exist in: %s" % (database['NAME'],
+                CONFIG['backup_server_name'], CONFIG['backup_remote_dir']))
+        fileName = os.path.basename(sorted(backupPaths)[-1])
         return fileName
     
-    def _restore_backup(self, fileName, client, database):
+    def restore_backup(self, filename, client, database):
         """ Restore a backup file. """
-        print "Restoring backup for database: %s" % database['NAME']
-        dropboxFilePath = "%s%s" % (CONFIG['backup_remote_dir'], fileName)
-        backupFilePath = "%s%s" % (CONFIG['backup_localwork_dir'], fileName)
-        # Copy the backupFile from Dropbox
-        print "  Pulling file from Dropbox: %s" % dropboxFilePath
-        response = client.get_file(CONFIG['root'], dropboxFilePath)
+        print "  Reading backup from Dropbox: %s" % filename
+        dropboxFilepath = "%s%s" % (CONFIG['backup_remote_dir'], filename)
+        response = client.get_file(CONFIG['root'], dropboxFilepath)
         assert response.status == 200
-        backupFile = open(backupFilePath, 'w')
-        backupFile.write(response.read())
-        backupFile.close()
-        # Close, Drop & Restore the database
+        restorefile = tempfile.SpooledTemporaryFile()
+        restorefile.write(response.read())
+        restorefile.seek(0, 2)
+        print "  Restore tempfile created: %s" % utils.bytesToStr(restorefile.tell())
+        print "  Closing database connection"
         connection.close()
-        for command in utils.get_commands(database, backupFilePath, 'restore'):
-            print "  Running: %s" % " ".join(command)
-            utils.run_command(command)
+        restorefile.seek(0)
+        utils.run_restore_commands(database, restorefile)
     

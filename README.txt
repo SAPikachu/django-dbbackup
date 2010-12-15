@@ -45,8 +45,6 @@ DBBACKUP_AUTH_USERNAME  - The local Django username to store Dropbox
 
 OPTIONAL DBBACKUP SETTINGS
 --------------------------
-DBBACKUP_LOCALWORK_DIR - Local workinf directory to use when creating database
-                       backups. Default: '/tmp/'
 DBBACKUP_REMOTE_DIR  - Remote dropbox directory to save created db backup
                        files. Default: '/django-dbbackups/'
 DBBACKUP_SERVER_NAME - Server name to append to the created db filenames.

@@ -10,35 +10,45 @@ Required Settings:
 
 from django.conf import settings
 
+COMMAND_READ = "<read>:"
+COMMAND_WRITE = "<write>:"
+DBMAP = {
+    'mysql': 'mysql',
+    'postgresql': 'postgresql',
+    'postgresql_psycopg2': 'postgresql',
+    'sqlite3': 'sqlite3',
+}
+
 CONFIG = {
     # Required Settings
     'consumer_key': settings.DROPBOX_CONSUMER_KEY,
     'consumer_secret': settings.DROPBOX_CONSUMER_SECRET,
-    'backup_auth_username': settings.DBBACKUP_AUTH_USERNAME,
+    'token_filepath': settings.DBBACKUP_TOKEN_FILEPATH,
     
     # Optional Backup & Restore Options
-    'backup_localwork_dir': getattr(settings, 'DBBACKUP_LOCALWORK_DIR', "/tmp/"),
     'backup_remote_dir': getattr(settings, 'DBBACKUP_REMOTE_DIR', "/django-dbbackups/"),
     'backup_server_name': getattr(settings, 'DBBACKUP_SERVER_NAME', ""),
     'backup_date_format': getattr(settings, 'DBBACKUP_DATE_FORMAT', "%Y-%m-%d-%H%M%S"),
     'backup_filename': getattr(settings, 'DBBACKUP_FILENAME', "{databasename}-{servername}-{datetime}.db"),
     'backup_databases': getattr(settings, 'DBBACKUP_DATABASES', settings.DATABASES.keys()),
     
-    # Backup Commands
-    'backup': getattr(settings, 'DBBACKUP_COMMANDS', {
-        'mysql': [["mysqldump -u {username} -p {password} {databasename} > {backupfile}"]],
-        'postgresql': [["pg_dump", "{databasename}", "--format=tar", "--file={backupfile}"]],
-        'postgresql_psycopg2': [["pg_dump", "{databasename}", "--format=tar", "--file={backupfile}"]],
-        'sqlite3': [["cp", "{databasename}", "{backupfile}"]],
-    }),
-    
-    # Restore Commands
-    'restore': getattr(settings, 'DBRESTORE_COMMANDS', {
-        'mysql': [["mysql -u {username} -p{password} {databasename} < {backupfile}"]],
-        'postgresql': [["dropdb", "{databasename}"], ["createdb", "{databasename}", "--owner={username}"], ["pg_restore", "--dbname={databasename}", "{backupfile}"]],
-        'postgresql_psycopg2': [["dropdb", "{databasename}"], ["createdb", "{databasename}", "--owner={username}"], ["pg_restore", "--dbname={databasename}", "{backupfile}"]],
-        'sqlite3': [["cp", "{backupfile}", "{databasename}"]],
-    }),
+    # Backup & Restore Commands
+    # Note: Use < & > in the command definition to denote that stdin 
+    # or stdout arguments are required input or output pipes respectivly.
+    'commands': {
+        'mysql': getattr(settings, 'DBBACKUP_MYSQL_COMMANDS', {
+            'backup': [['mysqldump', '-u{username}', '-p{password}', '{databasename}', '>']],
+            'restore': [['mysql', '-u{username}', '-p{password}', '{databasename}', '<']],
+        }),
+        'postgresql': getattr(settings, 'DBBACKUP_POSTGRESQL_COMMANDS', {
+            'backup': [['pg_dump', '{databasename}', '>']],
+            'restore': [['dropdb', '{databasename}'], ['createdb', '{databasename}', '--owner={username}'], ['psql', '{databasename}', '<']],
+        }),
+        'sqlite3': getattr(settings, 'DBBACKUP_POSTGRESQL_COMMANDS', {
+            'backup': [[COMMAND_READ, '{databasename}']],
+            'restore': [[COMMAND_WRITE, '{databasename}']],
+        }),
+    },
     
     # Optional Dropbox Settings
     # Don't change these unless you know what you're doing.

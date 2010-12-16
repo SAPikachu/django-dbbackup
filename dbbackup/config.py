@@ -10,13 +10,13 @@ Required Settings:
 
 from django.conf import settings
 
-COMMAND_READ = "<read>:"
-COMMAND_WRITE = "<write>:"
+COMMAND_READ = "<read>"
+COMMAND_WRITE = "<write>"
 DBMAP = {
-    'mysql': 'mysql',
-    'postgresql': 'postgresql',
-    'postgresql_psycopg2': 'postgresql',
-    'sqlite3': 'sqlite3',
+    'mysql':               {'db': 'mysql',      'ext': 'mysql'},
+    'postgresql':          {'db': 'postgresql', 'ext': 'psql'},
+    'postgresql_psycopg2': {'db': 'postgresql', 'ext': 'psql'},
+    'sqlite3':             {'db': 'sqlite',     'ext': 'sqlite'},
 }
 
 CONFIG = {
@@ -29,7 +29,7 @@ CONFIG = {
     'backup_remote_dir': getattr(settings, 'DBBACKUP_REMOTE_DIR', "/django-dbbackups/"),
     'backup_server_name': getattr(settings, 'DBBACKUP_SERVER_NAME', ""),
     'backup_date_format': getattr(settings, 'DBBACKUP_DATE_FORMAT', "%Y-%m-%d-%H%M%S"),
-    'backup_filename': getattr(settings, 'DBBACKUP_FILENAME', "{databasename}-{servername}-{datetime}.db"),
+    'backup_filename': getattr(settings, 'DBBACKUP_FILENAME', "{databasename}-{servername}-{datetime}.{extension}"),
     'backup_databases': getattr(settings, 'DBBACKUP_DATABASES', settings.DATABASES.keys()),
     
     # Backup & Restore Commands
@@ -41,10 +41,10 @@ CONFIG = {
             'restore': [['mysql', '-u{username}', '-p{password}', '{databasename}', '<']],
         }),
         'postgresql': getattr(settings, 'DBBACKUP_POSTGRESQL_COMMANDS', {
-            'backup': [['pg_dump', '{databasename}', '>']],
-            'restore': [['dropdb', '{databasename}'], ['createdb', '{databasename}', '--owner={username}'], ['psql', '{databasename}', '<']],
+            'backup': [['pg_dump', '--clean', '{databasename}', '>']],
+            'restore': [['psql', '-1', '{databasename}', '<']],
         }),
-        'sqlite3': getattr(settings, 'DBBACKUP_POSTGRESQL_COMMANDS', {
+        'sqlite': getattr(settings, 'DBBACKUP_POSTGRESQL_COMMANDS', {
             'backup': [[COMMAND_READ, '{databasename}']],
             'restore': [[COMMAND_WRITE, '{databasename}']],
         }),

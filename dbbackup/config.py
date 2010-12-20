@@ -1,6 +1,6 @@
 """
 Loads Dropbox Configuration
-  
+
 Required Settings:
   DROPBOX_CONSUMER_KEY          - Consumer Key from Dropbox.com
   DROPBOX_CONSUMER_SECRET       - Consumer Secret from Dropbox.com
@@ -13,10 +13,10 @@ from django.conf import settings
 COMMAND_READ = "<read>"
 COMMAND_WRITE = "<write>"
 DBMAP = {
-    'mysql':               {'db': 'mysql',      'ext': 'mysql'},
-    'postgresql':          {'db': 'postgresql', 'ext': 'psql'},
+    'mysql': {'db': 'mysql', 'ext': 'mysql'},
+    'postgresql': {'db': 'postgresql', 'ext': 'psql'},
     'postgresql_psycopg2': {'db': 'postgresql', 'ext': 'psql'},
-    'sqlite3':             {'db': 'sqlite',     'ext': 'sqlite'},
+    'sqlite3': {'db': 'sqlite', 'ext': 'sqlite'},
 }
 
 CONFIG = {
@@ -24,16 +24,16 @@ CONFIG = {
     'consumer_key': settings.DROPBOX_CONSUMER_KEY,
     'consumer_secret': settings.DROPBOX_CONSUMER_SECRET,
     'token_filepath': settings.DBBACKUP_TOKEN_FILEPATH,
-    
+
     # Optional Backup & Restore Options
     'backup_remote_dir': getattr(settings, 'DBBACKUP_REMOTE_DIR', "/django-dbbackups/"),
     'backup_server_name': getattr(settings, 'DBBACKUP_SERVER_NAME', ""),
     'backup_date_format': getattr(settings, 'DBBACKUP_DATE_FORMAT', "%Y-%m-%d-%H%M%S"),
     'backup_filename': getattr(settings, 'DBBACKUP_FILENAME', "{databasename}-{servername}-{datetime}.{extension}"),
     'backup_databases': getattr(settings, 'DBBACKUP_DATABASES', settings.DATABASES.keys()),
-    
+
     # Backup & Restore Commands
-    # Note: Use < & > in the command definition to denote that stdin 
+    # Note: Use < & > in the command definition to denote that stdin
     # or stdout arguments are required input or output pipes respectivly.
     'commands': {
         'mysql': getattr(settings, 'DBBACKUP_MYSQL_COMMANDS', {
@@ -49,7 +49,7 @@ CONFIG = {
             'restore': [[COMMAND_WRITE, '{databasename}']],
         }),
     },
-    
+
     # Optional Dropbox Settings
     # Don't change these unless you know what you're doing.
     'verifier': getattr(settings, 'DROPBOX_VERIFIER', ''),

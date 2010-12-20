@@ -15,14 +15,14 @@ from optparse import make_option
 
 
 class Command(LabelCommand):
-    help  = "Restore pgdump files from Dropbox.\n"
+    help = "Restore pgdump files from Dropbox.\n"
     help += "Backup dir: %s" % CONFIG['backup_remote_dir']
     option_list = BaseCommand.option_list + (
         make_option("-d", "--database", help="Database key to backup"),
         make_option("-f", "--filename", help="Specifiec file to pull from Dropbox"),
         make_option("-s", "--servername", help="Use different servername's backup file"),
     )
-    
+
     def handle(self, **options):
         """ Django command handler. """
         client = utils.get_dropbox_client()
@@ -39,7 +39,7 @@ class Command(LabelCommand):
         print "Restoring backup for database: %s" % database['NAME']
         filename = options['filename'] or self.get_latest_filename(client, database)
         self.restore_backup(filename, client, database)
-            
+
     def get_latest_filename(self, client, database):
         """ Return the latest filename in dropbox for backup. """
         print "  Finding latest backup"
@@ -51,7 +51,7 @@ class Command(LabelCommand):
                 CONFIG['backup_server_name'], CONFIG['backup_remote_dir']))
         fileName = os.path.basename(sorted(backupPaths)[-1])
         return fileName
-    
+
     def restore_backup(self, filename, client, database):
         """ Restore a backup file. """
         print "  Reading backup from Dropbox: %s" % filename
@@ -66,4 +66,3 @@ class Command(LabelCommand):
         connection.close()
         restorefile.seek(0)
         utils.run_restore_commands(database, restorefile)
-    

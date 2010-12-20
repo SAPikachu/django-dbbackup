@@ -14,27 +14,28 @@ from datetime import datetime
 from os import path
 from subprocess import Popen
 
+BYTES = (
+    ('PB', 1125899906842624.0),
+    ('TB', 1099511627776.0),
+    ('GB', 1073741824.0),
+    ('MB', 1048576.0),
+    ('KB', 1024.0),
+    ('B', 1.0),
+)
+
+
 ###################################
 #  Generally Useful Functions
 ###################################
 
-BYTES  = (
-    ('PB',1125899906842624.0),
-    ('TB',1099511627776.0),
-    ('GB',1073741824.0),
-    ('MB',1048576.0),
-    ('KB',1024.0),
-    ('B',1.0)
-)
-    
 def bytesToStr(byteVal, decimals=1):
     """ Convert bytes to a human readable string. """
     for unit, byte in BYTES:
         if (byteVal >= byte):
             if (decimals == 0):
-                return "%s %s" % (int(round(byteVal/byte, 0)), unit)
+                return "%s %s" % (int(round(byteVal / byte, 0)), unit)
             else:
-                return "%s %s" % (round(byteVal/byte, decimals), unit)
+                return "%s %s" % (round(byteVal / byte, decimals), unit)
     return "%s B" % byteVal
 
 
@@ -58,8 +59,8 @@ def backup_filename(database, wildcard=None):
 def backup_filename_match(database, wildcard='*'):
     """ Return the prefix for backup filenames. """
     return backup_filename(database, wildcard)
-    
-    
+
+
 def dbengine(database):
     """ Return the simple database engine name for the specified database. """
     return database['ENGINE'].split('.')[-1]
@@ -103,8 +104,8 @@ def run_restore_commands(database, stdin=None):
     engine = DBMAP[dbengine(database)]['db']
     commands = CONFIG['commands'][engine]['restore']
     return run_commands(commands, database, stdin=stdin)
-    
-    
+
+
 def run_commands(commands, database, stdin=None, stdout=None):
     """ Translate and run the commands for the specified database. """
     for command in commands:
@@ -127,10 +128,9 @@ def run_commands(commands, database, stdin=None, stdout=None):
             writehandle.close()
         else:
             # Use subprocess.Popen to run the command
-            pstdin, pstdout = None, None
-            if (command[-1] == '<'): pstdin = stdin
-            if (command[-1] == '>'): pstdout = stdout
-            command = filter(lambda arg: arg not in ['<','>'], command)
+            pstdin = stdin if command[-1] == '<' else None
+            pstdout = stdout if command[-1] == '>' else None
+            command = filter(lambda arg: arg not in ['<', '>'], command)
             print "  Running: %s" % ' '.join(command)
             process = Popen(command, stdin=pstdin, stdout=pstdout)
             process.wait()

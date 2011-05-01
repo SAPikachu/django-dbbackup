@@ -6,6 +6,7 @@ import re
 import tempfile
 from ... import utils
 from ...config import CONFIG
+from ...decorators import email_uncaught_exception
 from django.conf import settings
 from django.core.management.base import BaseCommand
 from django.core.management.base import LabelCommand
@@ -21,6 +22,7 @@ class Command(LabelCommand):
         make_option("-s", "--servername", help="Specifiy a servername to append to the filename"),
     )
 
+    @email_uncaught_exception
     def handle(self, **options):
         """ Django command handler. """
         client = utils.get_dropbox_client()

@@ -1,69 +1,70 @@
 """
 Save backup files to Dropbox.
 """
-import datetime
 import re
+import datetime
 import tempfile
 from ... import utils
-from ...config import CONFIG
-from ...decorators import email_uncaught_exception
+from ...commander import Commander
+from ...commander import DATE_FORMAT
+from ...storage.base import BaseStorage
+from ...storage.base import StorageError
 from django.conf import settings
 from django.core.management.base import BaseCommand
+from django.core.management.base import CommandError
 from django.core.management.base import LabelCommand
 from optparse import make_option
 
+DATABASE_KEYS = getattr(settings, 'DBBACKUP_DATABASES', settings.DATABASES.keys())
+
 
 class Command(LabelCommand):
-    help = "Save pgdump files to Dropbox.\n"
-    help += "Backup dir: %s" % CONFIG['backup_remote_dir']
+    help = "dbbackup [-c] [-d <dbname>] [-s <servername>]"
     option_list = BaseCommand.option_list + (
         make_option("-c", "--clean", help="Clean up old backup files", action="store_true", default=False),
-        make_option("-d", "--database", help="Database key to backup (defaults to all)"),
-        make_option("-s", "--servername", help="Specifiy a servername to append to the filename"),
+        make_option("-d", "--database", help="Database to backup (default: everything)"),
+        make_option("-s", "--servername", help="Specifiy server name to include in backup filename"),
     )
 
-    @email_uncaught_exception
+    @utils.email_uncaught_exception
     def handle(self, **options):
         """ Django command handler. """
-        client = utils.get_dropbox_client()
-        if (options.get('servername') != None):
-            CONFIG['backup_server_name'] = options['servername']
-        databaseKeys = CONFIG['backup_databases']
-        if (options.get('database')):
-            databaseKeys = [options['database']]
-        for databaseKey in databaseKeys:
-            database = settings.DATABASES[databaseKey]
-            self.save_new_backup(client, database)
-            if (options['clean']):
-                self.cleanup_old_backups(client, database)
+        try:
+            self.clean = options.get('clean')
+            self.database = options.get('database')
+            self.servername = options.get('servername')
+            self.storage = BaseStorage.storage_factory()
+            database_keys = (self.database,) if self.database else DATABASE_KEYS
+            for database_key in database_keys:
+                database = settings.DATABASES[database_key]
+                self.commander = Commander(database)
+                self.save_new_backup(database)
+                self.cleanup_old_backups(database)
+        except StorageError, err:
+            raise CommandError(err)
 
-    def save_new_backup(self, client, database):
+    def save_new_backup(self, database):
         """ Save a new backup file. """
-        print "Backing up database: %s" % database['NAME']
+        print "Backing Up Database: %s" % database['NAME']
         backupfile = tempfile.SpooledTemporaryFile()
-        backupfile.name = utils.backup_filename(database)
-        utils.run_backup_commands(database, backupfile)
-        backupfile.seek(0, 2)
-        print "  Backup tempfile created: %s" % utils.bytesToStr(backupfile.tell())
-        print "  Saving backup to Dropbox: %s" % backupfile.name
-        backupfile.seek(0)
-        response = client.put_file(CONFIG['root'], CONFIG['backup_remote_dir'], backupfile)
-        assert response.http_response.status == 200
+        backupfile.name = self.commander.filename(self.servername)
+        self.commander.run_backup_commands(backupfile)
+        print "  Backup tempfile created: %s (%s)" % (backupfile.name, utils.handle_size(backupfile))
+        print "  Writing file to %s: %s" % (self.storage.name, self.storage.backup_dir())
+        self.storage.write_file(backupfile)
 
-    def cleanup_old_backups(self, client, database):
+    def cleanup_old_backups(self, database):
         """ Cleanup old backups.  Delete everything but the last 10
             backups, and any backup that occur on first of the month.
         """
-        print "Cleaning old backups"
-        response = client.metadata(CONFIG['root'], CONFIG['backup_remote_dir'])
-        assert response.http_response.status == 200
-        backupPaths = utils.filter_backups(response.data['contents'], database)
-        for backupPath in sorted(backupPaths[0:-10]):
-            fileMatch = utils.backup_filename_match(database, '(.*?)')
-            dateMatch = re.findall(fileMatch, backupPath)[0]
-            dateTime = datetime.datetime.strptime(dateMatch, CONFIG['backup_date_format'])
-            dayOfMonth = int(dateTime.strftime("%d"))
-            if (dayOfMonth != 1):
-                print "  Deleting %s" % backupPath
-                response = client.file_delete(CONFIG['root'], backupPath)
-                assert response.http_response.status == 200
+        if self.clean:
+            print "Cleaning Old Backups for: %s" % database['NAME']
+            filepaths = self.storage.list_directory()
+            filepaths = self.commander.filter_filepaths(filepaths)
+            for filepath in sorted(filepaths[0:-10]):
+                regex = self.commander.filename_match(self.servername, '(.*?)')
+                datestr = re.findall(regex, filepath)[0]
+                dateTime = datetime.datetime.strptime(datestr, DATE_FORMAT)
+                if int(dateTime.strftime("%d")) != 1:
+                    print "  Deleting: %s" % filepath
+                    self.storage.delete_file(filepath)

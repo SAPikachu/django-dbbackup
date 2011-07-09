@@ -53,7 +53,10 @@ class Command(LabelCommand):
         if not self.filepath:
             print "  Finding latest backup"
             filepaths = self.storage.list_directory()
-            self.filepath = self.commander.filter_filepaths(filepaths, self.servername)[-1]
+            filepaths = self.commander.filter_filepaths(filepaths, self.servername)
+            if not filepaths:
+                raise CommandError("No backup files found in: %s" % self.storage.backup_dir())
+            self.filepath = filepaths[-1]
         # Restore the specified filepath backup
         backupfile = self.storage.read_file(self.filepath)
         print "  Restore tempfile created: %s" % utils.handle_size(backupfile)

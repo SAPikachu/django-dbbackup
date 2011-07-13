@@ -7,12 +7,13 @@ from django.conf import settings
 
 
 ################################
-#  Dropbox Storage Object
+#  Filesystem Storage Object
 ################################
 
 class Storage(BaseStorage):
-    """ Dropbox API Storage. """
+    """ Filesystem API Storage. """
     BACKUP_DIRECTORY = getattr(settings, 'DBBACKUP_FILESYSTEM_DIRECTORY', None)
+    BACKUP_DIRECTORY = '/%s/' % BACKUP_DIRECTORY.strip('/')
 
     def __init__(self, server_name=None):
         self._check_filesystem_errors()

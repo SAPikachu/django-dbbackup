@@ -164,7 +164,7 @@ class Storage(BaseStorage):
         except AssertionError, e:
             # Check we have a bad request token
             if '403' in e.args[0]:
-                self.create_request_token(Authenticator(self.config))
+                self.create_request_token(Authenticator(self.DROPBOX_CONFIG))
 
     def save_token_file(self):
         """ Save the config to disk. """

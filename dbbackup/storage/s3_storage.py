@@ -8,6 +8,7 @@ from simples3.streaming import StreamingS3Bucket
 
 
 ################################
+
 #  S3 Storage Object
 ################################
 
@@ -23,7 +24,7 @@ class Storage(BaseStorage):
     def __init__(self, server_name=None):
         self._check_filesystem_errors()
         self.name = 'AmazonS3'
-        self.bucket = StreamingS3Bucket(self.S3_BUCKET, self.S3_ACCESS_KEY, self.S3_SECRET_KEY, amazon_s3_domain=S3_HOST)
+        self.bucket = StreamingS3Bucket(self.S3_BUCKET, self.S3_ACCESS_KEY, self.S3_SECRET_KEY, amazon_s3_domain=self.S3_HOST)
         BaseStorage.__init__(self)
 
     def _check_filesystem_errors(self):

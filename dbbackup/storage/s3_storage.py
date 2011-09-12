@@ -16,13 +16,14 @@ class Storage(BaseStorage):
     S3_BUCKET = getattr(settings, 'DBBACKUP_S3_BUCKET', None)
     S3_ACCESS_KEY = getattr(settings, 'DBBACKUP_S3_ACCESS_KEY', None)
     S3_SECRET_KEY = getattr(settings, 'DBBACKUP_S3_SECRET_KEY', None)
+    S3_HOST = getattr(settings, 'DBBACKUP_S3_HOST', 's3.amazonaws.com')
     S3_DIRECTORY =  getattr(settings, 'DBBACKUP_S3_DIRECTORY', "django-dbbackups/")
     S3_DIRECTORY = '%s/' % S3_DIRECTORY.strip('/')
 
     def __init__(self, server_name=None):
         self._check_filesystem_errors()
         self.name = 'AmazonS3'
-        self.bucket = StreamingS3Bucket(self.S3_BUCKET, self.S3_ACCESS_KEY, self.S3_SECRET_KEY)
+        self.bucket = StreamingS3Bucket(self.S3_BUCKET, self.S3_ACCESS_KEY, self.S3_SECRET_KEY, amazon_s3_domain=self.S3_HOST)
         BaseStorage.__init__(self)
 
     def _check_filesystem_errors(self):

@@ -77,6 +77,10 @@ DBBACKUP_S3_DIRECTORY (optional)
     The directory in your Amazon S3 bucket you wish to save your backups. By
     default this is set to 'django-dbbackups/'.
 
+DBBACKUP_S3_DOMAIN (optional)
+    Optionally specify the Amazon domain to use when transferring the
+    generated backup files.
+
 
 
 =====================
@@ -125,21 +129,21 @@ SETUP YOUR DJANGO PROJECT
 AVAILABLE SETTINGS
 ------------------
 DBBACKUP_TOKENS_FILEPATH (required)
-  The local filepath to store the Dropbox oAuth request and tokens. This file
-  will be auto-created, but should be treated like any other password to
-  access your website. NOTE: Do not share these keys with anyone you do not
-  trust with access to your Dropbox files.
+    The local filepath to store the Dropbox oAuth request and tokens. This file
+    will be auto-created, but should be treated like any other password to
+    access your website. NOTE: Do not share these keys with anyone you do not
+    trust with access to your Dropbox files.
 
 DBBACKUP_DROPBOX_CONFIG (required)
-  Dictionary containing Dropbox API configuration settings. Most of the
-  settings contain defaults that you do not need to worry about. However, the
-  two settings 'consumer_key' & 'consumer_secret' are required. You should
-  refer to the Dropbox API documention to see a list of other settings
-  available.
+    Dictionary containing Dropbox API configuration settings. Most of the
+    settings contain defaults that you do not need to worry about. However, the
+    two settings 'consumer_key' & 'consumer_secret' are required. You should
+    refer to the Dropbox API documention to see a list of other settings
+    available.
 
 DBBACKUP_DROPBOX_DIRECTORY (optional)
-  The directory in Dropbox you wish to save your backups. By default this is
-  set to '/django-dbbackups/'.
+    The directory in Dropbox you wish to save your backups. By default this is
+    set to '/django-dbbackups/'.
 
 
 ========================
@@ -170,7 +174,7 @@ SETUP YOUR DJANGO PROJECT
 AVAILABLE SETTINGS
 ------------------
 DBBACKUP_FILESYSTEM_DIRECTORY (required)
-  The directory on your local system you wish to save your backups.
+    The directory on your local system you wish to save your backups.
 
 
 
@@ -186,57 +190,57 @@ settings.
 MYSQL
 -----
 DBBACKUP_MYSQL_EXTENSION (optional)
-  Entension to use for a mysql backup. By default this is 'mysql'.
+    Entension to use for a mysql backup. By default this is 'mysql'.
 
 DBBACKUP_MYSQL_BACKUP_COMMANDS (optional)
-  List of commands to use execute when creating a backup. Commands are sent
-  to popen and should be split into shlex tokens. By default, the following
-  command is run:
-  >> mysqldump -u{username} -p{password} {databasename} >
+    List of commands to use execute when creating a backup. Commands are sent
+    to popen and should be split into shlex tokens. By default, the following
+    command is run:
+    >> mysqldump -u{username} -p{password} {databasename} >
 
 DBBACKUP_MYSQL_RESTORE_COMMANDS (optional)
-  List of commands to use execute when creating a backup. Commands are sent
-  to popen and should be split into shlex tokens. By default, the following
-  command is run:
-  >> mysql -u{username} -p{password} {databasename} <
+    List of commands to use execute when creating a backup. Commands are sent
+    to popen and should be split into shlex tokens. By default, the following
+    command is run:
+    >> mysql -u{username} -p{password} {databasename} <
 
 
 POSTGRES
 --------
 DBBACKUP_POSTGRES_EXTENSION (optional)
-  Entension to use for a postgres backup. By default this is 'psql'.
+    Entension to use for a postgres backup. By default this is 'psql'.
 
 DBBACKUP_POSTGRES_BACKUP_COMMANDS (optional)
-  List of commands to use execute when creating a backup. Commands are sent
-  to popen and should be split into shlex tokens. By default, the following
-  command is run:
-  >> pg_dump {databasename} >
+    List of commands to use execute when creating a backup. Commands are sent
+    to popen and should be split into shlex tokens. By default, the following
+    command is run:
+    >> pg_dump {databasename} >
 
 DBBACKUP_POSTGRES_RESTORE_COMMANDS (optional)
-  List of commands to use execute when restoring a backup. Commands are sent
-  to popen and should be split into shlex tokens. By default, the following
-  commands are run:
-  >> dropdb {databasename}
-  >> createdb {databasename} --owner={username}
-  >> psql -1 {databasename} <
+    List of commands to use execute when restoring a backup. Commands are sent
+    to popen and should be split into shlex tokens. By default, the following
+    commands are run:
+    >> dropdb {databasename}
+    >> createdb {databasename} --owner={username}
+    >> psql -1 {databasename} <
 
 
 SQLITE
 ------
 DBBACKUP_SQLITE_EXTENSION (optional)
-  Entension to use for an sqlite backup. By default this is 'sqlite'.
+    Entension to use for an sqlite backup. By default this is 'sqlite'.
 
 DBBACKUP_SQLITE_BACKUP_COMMANDS (optional)
-  List of commands to use execute when creating a backup. Commands are sent to
-  popen and should be split into shlex tokens. By default, the following
-  command is run:
-  >> [READ_FILE, '{databasename}']
+    List of commands to use execute when creating a backup. Commands are sent to
+    popen and should be split into shlex tokens. By default, the following
+    command is run:
+    >> [READ_FILE, '{databasename}']
 
 DBBACKUP_SQLITE_RESTORE_COMMANDS (optional)
-  List of commands to use execute when restoring a backup. Commands are sent
-  to popen and should be split into shlex tokens. By default, the following
-  command is run:
-  >> [WRITE_FILE, '{databasename}']
+    List of commands to use execute when restoring a backup. Commands are sent
+    to popen and should be split into shlex tokens. By default, the following
+    command is run:
+    >> [WRITE_FILE, '{databasename}']
 
 
 
@@ -248,10 +252,10 @@ When creating backup or restore commands, there are a few template variables
 you can use in the commands (listed below). Also note, ending a command with >
 or < will pipe the file contents from or to the command respectively.
 
-  {databasename}: Name of the database from settings.py
-  {servername}: Optional SERVER_NAME setting in settings.py
-  {datetime}: Current datetime string (see DBBACKUP_DATE_FORMAT).
-  {extension}: File extension for the current database.
+    {databasename}: Name of the database from settings.py
+    {servername}: Optional SERVER_NAME setting in settings.py
+    {datetime}: Current datetime string (see DBBACKUP_DATE_FORMAT).
+    {extension}: File extension for the current database.
 
 There are also two special commands READ_FILE and WRITE_FILE which take the
 form of a two-item list, the second item being the file to read or write.
@@ -263,20 +267,20 @@ Please see the SQLite settings above for reference.
  GLOBAL SETTINGS
 =================
 DBBACKUP_STORAGE (required)
-  String pointing to django-dbbackup location module to use when performing a
-  backup. You can see the exact definitions to use in the required settings
-  for the backup location of your choice above.
+    String pointing to django-dbbackup location module to use when performing a
+    backup. You can see the exact definitions to use in the required settings
+    for the backup location of your choice above.
 
 DBBACKUP_DATE_FORMAT (optional)
-  The Python datetime format to use when generating the backup filename. By
-  default this is '%Y-%m-%d-%H%M%S'.
+    The Python datetime format to use when generating the backup filename. By
+    default this is '%Y-%m-%d-%H%M%S'.
 
 DBBACKUP_SERVER_NAME (optional)
-  An optional server name to use when generating the backup filename. This is
-  useful to help distinguish between development and production servers. By
-  default this value is not used and the servername is not included in the
-  generated filename.
+    An optional server name to use when generating the backup filename. This is
+    useful to help distinguish between development and production servers. By
+    default this value is not used and the servername is not included in the
+    generated filename.
 
 DBBACKUP_FILENAME_TEMPLATE (optional)
-  The template to use when generating the backup filename. By default this is
-  '{databasename}-{servername}-{datetime}.{extension}'.
+    The template to use when generating the backup filename. By default this is
+    '{databasename}-{servername}-{datetime}.{extension}'.

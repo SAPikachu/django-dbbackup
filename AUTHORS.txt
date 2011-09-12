@@ -1,2 +1,2 @@
 Primary Authors:
-    * Michael Shepanski
+  * Michael Shepanski

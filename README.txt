@@ -79,7 +79,8 @@ DBBACKUP_S3_DIRECTORY (optional)
 
 DBBACKUP_S3_DOMAIN (optional)
     Optionally specify the Amazon domain to use when transferring the
-    generated backup files.
+    generated backup files. For example, this can be set to
+    s3-eu-west-1.amazonaws.com. By default, this is 's3.amazonaws.com'.
 
 
 

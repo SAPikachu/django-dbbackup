@@ -5,8 +5,8 @@ import re
 import datetime
 import tempfile
 from ... import utils
-from ...commander import Commander
-from ...commander import DATE_FORMAT
+from ...dbcommands import DBCommands
+from ...dbcommands import DATE_FORMAT
 from ...storage.base import BaseStorage
 from ...storage.base import StorageError
 from django.conf import settings
@@ -37,7 +37,7 @@ class Command(LabelCommand):
             database_keys = (self.database,) if self.database else DATABASE_KEYS
             for database_key in database_keys:
                 database = settings.DATABASES[database_key]
-                self.commander = Commander(database)
+                self.dbcommands = DBCommands(database)
                 self.save_new_backup(database)
                 self.cleanup_old_backups(database)
         except StorageError, err:
@@ -47,8 +47,8 @@ class Command(LabelCommand):
         """ Save a new backup file. """
         print "Backing Up Database: %s" % database['NAME']
         backupfile = tempfile.SpooledTemporaryFile()
-        backupfile.name = self.commander.filename(self.servername)
-        self.commander.run_backup_commands(backupfile)
+        backupfile.name = self.dbcommands.filename(self.servername)
+        self.dbcommands.run_backup_commands(backupfile)
         print "  Backup tempfile created: %s (%s)" % (backupfile.name, utils.handle_size(backupfile))
         print "  Writing file to %s: %s" % (self.storage.name, self.storage.backup_dir())
         self.storage.write_file(backupfile)
@@ -60,9 +60,9 @@ class Command(LabelCommand):
         if self.clean:
             print "Cleaning Old Backups for: %s" % database['NAME']
             filepaths = self.storage.list_directory()
-            filepaths = self.commander.filter_filepaths(filepaths)
+            filepaths = self.dbcommands.filter_filepaths(filepaths)
             for filepath in sorted(filepaths[0:-10]):
-                regex = self.commander.filename_match(self.servername, '(.*?)')
+                regex = self.dbcommands.filename_match(self.servername, '(.*?)')
                 datestr = re.findall(regex, filepath)[0]
                 dateTime = datetime.datetime.strptime(datestr, DATE_FORMAT)
                 if int(dateTime.strftime("%d")) != 1:

@@ -60,10 +60,10 @@ class SQLITE_SETTINGS:
 
 
 ##################################
-#  Commander Class
+#  DBCommands Class
 ##################################
 
-class Commander:
+class DBCommands:
     """ Process the Backup or Restore commands. """
 
     def __init__(self, database):

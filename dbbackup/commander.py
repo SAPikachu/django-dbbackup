@@ -1,7 +1,7 @@
 """
 Process the Backup or Restore commands.
 """
-import copy, re, shlex, sys
+import copy, os, re, shlex
 from datetime import datetime
 from django.conf import settings
 from django.core.management.base import CommandError
@@ -124,7 +124,7 @@ class Commander:
 
     def run_command(self, command, stdin=None, stdout=None):
         """ Run the specified command. """
-        devnull = open('/dev/null', 'w')
+        devnull = open(os.devnull, 'w')
         pstdin = stdin if command[-1] == '<' else None
         pstdout = stdout if command[-1] == '>' else devnull
         command = filter(lambda arg: arg not in ['<', '>'], command)

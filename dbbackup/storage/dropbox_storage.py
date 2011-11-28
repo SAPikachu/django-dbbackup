@@ -1,13 +1,15 @@
 """
 Dropbox API Storage object.
 """
-import tempfile, copy
+import pickle
+import os
+import tempfile
 from .base import BaseStorage, StorageError
 from ConfigParser import ConfigParser
+from dropbox.rest import ErrorResponse
 from django.conf import settings
-from dropbox.auth import Authenticator
 from dropbox.client import DropboxClient
-from oauth.oauth import OAuthToken
+from dropbox import session
 
 DEFAULT_CONFIG = {
     'consumer_key': None,
@@ -29,32 +31,31 @@ DEFAULT_CONFIG = {
 
 class Storage(BaseStorage):
     """ Dropbox API Storage. """
+    name = 'Dropbox'
     TOKENS_FILEPATH = getattr(settings, 'DBBACKUP_TOKENS_FILEPATH', None)
     DROPBOX_DIRECTORY = getattr(settings, 'DBBACKUP_DROPBOX_DIRECTORY', "/django-dbbackups/")
     DROPBOX_DIRECTORY = '/%s/' % DROPBOX_DIRECTORY.strip('/')
-    DROPBOX_CONFIG = copy.copy(DEFAULT_CONFIG)
-    DROPBOX_CONFIG.update(getattr(settings, 'DBBACKUP_DROPBOX_CONFIG', {}))
-    REQUEST_KEY = 'request_key'
-    ACCESS_KEY = 'access_key'
+    DBBACKUP_DROPBOX_APP_KEY = getattr(settings, 'DBBACKUP_DROPBOX_APP_KEY', None)
+    DBBACKUP_DROPBOX_APP_SECRET = getattr(settings, 'DBBACKUP_DROPBOX_APP_SECRET', None)
+    DBBACKUP_DROPBOX_ACCESS_TYPE = getattr(settings, 'DBBACKUP_DROPBOX_ACCESS_TYPE', None)
     _request_token = None
     _access_token = None
 
     def __init__(self, server_name=None):
-        self._check_dropbox_errors()
-        self.name = 'Dropbox'
+        self._check_settings()
         self.dropbox = self.get_dropbox_client()
         BaseStorage.__init__(self)
 
-    def _check_dropbox_errors(self):
+    def _check_settings(self):
         """ Check we have all the required settings defined. """
         if not self.TOKENS_FILEPATH:
             raise StorageError('Dropbox storage requires DBBACKUP_TOKENS_FILEPATH to be defined in settings.')
-        if not self.DROPBOX_CONFIG:
-            raise StorageError('%s storage requires DBBACKUP_DROPBOX_CONFIG to be defined in settings.' % self.name)
-        if not self.DROPBOX_CONFIG.get('consumer_key'):
-            raise StorageError('%s storage requires DBBACKUP_DROPBOX_CONFIG["consumer_key"] to be specified.' % self.name)
-        if not self.DROPBOX_CONFIG.get('consumer_secret'):
-            raise StorageError('%s storage requires DBBACKUP_DROPBOX_CONFIG["consumer_secret"] to be specified.' % self.name)
+        if not self.DBBACKUP_DROPBOX_APP_KEY:
+            raise StorageError('%s storage requires DBBACKUP_DROPBOX_APP_KEY to be defined in settings.' % self.name)
+        if not self.DBBACKUP_DROPBOX_APP_SECRET:
+            raise StorageError('%s storage requires DBBACKUP_DROPBOX_APP_SECRET to be specified.' % self.name)
+        if not self.DBBACKUP_DROPBOX_ACCESS_TYPE:
+            raise StorageError('%s storage requires DBBACKUP_DROPBOX_ACCESS_TYPE to be specified.' % self.name)
 
     ###################################
     #  DBBackup Storage Methods
@@ -65,115 +66,106 @@ class Storage(BaseStorage):
 
     def delete_file(self, filepath):
         """ Delete the specified filepath. """
-        root = self.DROPBOX_CONFIG['root']
-        response = self.dropbox.file_delete(root, filepath)
-        self._check_response(response)
+        response = self.run_dropbox_action(self.dropbox.file_delete, filepath)
 
     def list_directory(self):
         """ List all stored backups for the specified. """
-        root = self.DROPBOX_CONFIG['root']
-        response = self.dropbox.metadata(root, self.DROPBOX_DIRECTORY)
-        self._check_response(response)
-        filepaths = [x['path'] for x in response.data['contents'] if not x['is_dir']]
+        metadata = self.run_dropbox_action(self.dropbox.metadata, self.DROPBOX_DIRECTORY)
+        filepaths = [x['path'] for x in metadata if not x['is_dir']]
         return sorted(filepaths)
 
     def write_file(self, filehandle):
         """ Write the specified file. """
         filehandle.seek(0)
-        root = self.DROPBOX_CONFIG['root']
-        response = self.dropbox.put_file(root, self.DROPBOX_DIRECTORY, filehandle)
-        self._check_response(response)
+        path = os.path.join(self.DROPBOX_DIRECTORY, filehandle.name)
+        self.run_dropbox_action(self.dropbox.put_file, path, filehandle)
 
     def read_file(self, filepath):
         """ Read the specified file and return it's handle. """
-        root = self.DROPBOX_CONFIG['root']
-        response = self.dropbox.get_file(root, filepath)
-        self._check_response(response)
+        response = self.run_dropbox_action(self.dropbox.get_file, filepath)
         filehandle = tempfile.SpooledTemporaryFile()
         filehandle.write(response.read())
         return filehandle
 
-    def _check_response(self, response):
+    def run_dropbox_action(self, method, *args, **kwargs):
         """ Check we have a valid 200 response from Dropbox. """
-        http_response = getattr(response, 'http_response', response)
-        if http_response.status != 200:
-            errmsg = "ERROR [%s]: %s" % (response.http_response.status, response.reason)
+        try:
+            response = method(*args, **kwargs)
+        except ErrorResponse, e:
+            errmsg = "ERROR %s" % (e,)
             raise StorageError(errmsg)
+        return response
 
     ###################################
-    #  oAuth Client Methods
+    #  Dropbox Client Methods
     ###################################
 
     def get_dropbox_client(self):
         """ Connect and return a Dropbox client object. """
         self.read_token_file()
-        auth = Authenticator(self.DROPBOX_CONFIG)
-        access_token = self.get_access_token(auth)
-        oauth = OAuthToken.from_string(access_token)
-        server = self.DROPBOX_CONFIG['server']
-        content_server = self.DROPBOX_CONFIG['content_server']
-        port = self.DROPBOX_CONFIG['port']
-        dropbox = DropboxClient(server, content_server, port, auth, oauth)
-        # Test the connection
-        if dropbox.account_info().http_response.status != 200:
-            self.create_request_token(auth)
+        sess = session.DropboxSession(self.DBBACKUP_DROPBOX_APP_KEY,
+                                      self.DBBACKUP_DROPBOX_APP_SECRET,
+                                      self.DBBACKUP_DROPBOX_ACCESS_TYPE)
+        # Get existing or new access token and use it for this session
+        access_token = self.get_access_token(sess)
+        sess.set_token(access_token.key, access_token.secret)
+        dropbox = DropboxClient(sess)
+        # Test the connection by making call to get account_info
+        acct_info = dropbox.account_info()
         return dropbox
 
-    def read_token_file(self):
-        """ Reload the config from disk. """
-        tokenfile = ConfigParser()
-        tokenfile.read(self.TOKENS_FILEPATH)
-        if tokenfile.has_section(self.REQUEST_KEY) and tokenfile.has_option(self.REQUEST_KEY, 'token'):
-            self._request_token = tokenfile.get(self.REQUEST_KEY, 'token')
-        if tokenfile.has_section(self.ACCESS_KEY) and tokenfile.has_option(self.ACCESS_KEY, 'token'):
-            self._access_token = tokenfile.get(self.ACCESS_KEY, 'token')
-
-    def get_request_token(self, auth):
-        """ Return Request oAuthToken. If not available, a new one will be created, saved
+    def get_request_token(self, sess):
+        """ Return Request Token. If not available, a new one will be created, saved
             and a RequestUrl object will be returned.
         """
         if not self._request_token:
-            return self.create_request_token(auth)
+            return self.create_request_token(sess)
         return self._request_token
 
-    def get_access_token(self, auth):
-        """ Return Access oAuthToken. If not available, a new one will be created and saved. """
-        if not self._access_token:
-            request_token = self.get_request_token(auth)
-            return self.create_access_token(auth, request_token)
-        return self._access_token
-
-    def create_request_token(self, auth):
-        """ Create and save a new request token. """
-        self._request_token = auth.obtain_request_token()
-        self._access_token = None
+    def create_request_token(self, sess):
+        """ Return Request Token. If not available, a new one will be created, saved
+            and a RequestUrl object will be returned.
+        """
+        self._request_token = sess.obtain_request_token()
         self.save_token_file()
-        # If we hit this code, we know were not authorized
+        return self._request_token
+
+    def prompt_for_authorization(self, sess, request_token):
+        """ Generate the authorization url, show it to the user and exit """
         message = "Dropbox not authorized, visit the following URL to authorize:\n"
-        message += auth.build_authorize_url(self._request_token)
+        message += sess.build_authorize_url(request_token)
         raise StorageError(message)
 
-    def create_access_token(self, auth, request_token):
-        """ Create and save a new access token to self.filepath. """
+    def get_access_token(self, sess):
+        """ Return Access Token. If not available, a new one will be created and saved. """
+        if not self._access_token:
+            return self.create_access_token(sess)
+        return self._access_token
+
+    def create_access_token(self, sess):
+        """ Create and save a new access token to self.TOKENFILEPATH. """
+        request_token = self.get_request_token(sess)
         try:
-            oauth = OAuthToken.from_string(request_token)
-            verifier = self.DROPBOX_CONFIG['verifier']
-            self._access_token = auth.obtain_access_token(oauth, verifier).to_string()
-            self.save_token_file()
-            return self._access_token
-        except AssertionError, e:
-            # Check we have a bad request token
-            if '403' in e.args[0]:
-                self.create_request_token(Authenticator(self.DROPBOX_CONFIG))
+            self._access_token = sess.obtain_access_token(request_token)
+        except ErrorResponse:
+            # If we get an error, it means the request token has expired or is not authorize, generate a new request
+            # token and prompt the user to complete the authorization process
+            request_token = self.create_request_token(sess)
+            self.prompt_for_authorization(sess, request_token)
+        # We've got a good access token, save it.
+        self.save_token_file()
+        return self._access_token
 
     def save_token_file(self):
-        """ Save the config to disk. """
-        tokenfile = ConfigParser()
-        if self._request_token:
-            tokenfile.add_section(self.REQUEST_KEY)
-            tokenfile.set(self.REQUEST_KEY, 'token', self._request_token)
-        if self._access_token:
-            tokenfile.add_section(self.ACCESS_KEY)
-            tokenfile.set(self.ACCESS_KEY, 'token', self._access_token)
+        """ Save the request and access tokens to disk. """
+        tokendata = dict(request_token=self._request_token, access_token=self._access_token)
         with open(self.TOKENS_FILEPATH, 'wb') as tokenhandle:
-            tokenfile.write(tokenhandle)
+            pickle.dump(tokendata, tokenhandle)
+
+    def read_token_file(self):
+        """ Reload the request and/or access tokens from disk. """
+        if os.path.exists(self.TOKENS_FILEPATH):
+            with open(self.TOKENS_FILEPATH, 'rb') as tokenhandle:
+                tokendata = pickle.load(tokenhandle)
+            self._request_token = tokendata.get('request_token')
+            self._access_token = tokendata.get('access_token')

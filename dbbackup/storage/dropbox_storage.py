@@ -71,7 +71,7 @@ class Storage(BaseStorage):
     def list_directory(self):
         """ List all stored backups for the specified. """
         metadata = self.run_dropbox_action(self.dropbox.metadata, self.DROPBOX_DIRECTORY)
-        filepaths = [x['path'] for x in metadata if not x['is_dir']]
+        filepaths = [x['path'] for x in metadata['contents'] if not x['is_dir']]
         return sorted(filepaths)
 
     def write_file(self, filehandle):

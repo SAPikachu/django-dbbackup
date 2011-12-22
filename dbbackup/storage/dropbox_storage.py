@@ -5,24 +5,12 @@ import pickle
 import os
 import tempfile
 from .base import BaseStorage, StorageError
-from ConfigParser import ConfigParser
 from dropbox.rest import ErrorResponse
 from django.conf import settings
 from dropbox.client import DropboxClient
 from dropbox import session
 
-DEFAULT_CONFIG = {
-    'consumer_key': None,
-    'consumer_secret': None,
-    'verifier': '',
-    'server': 'api.dropbox.com',
-    'content_server': 'api-content.dropbox.com',
-    'port': 80,
-    'request_token_url': 'https://api.dropbox.com/0/oauth/request_token',
-    'access_token_url': 'https://api.dropbox.com/0/oauth/access_token',
-    'authorization_url': 'https://www.dropbox.com/0/oauth/authorize',
-    'root': 'dropbox',
-}
+DEFAULT_ACCESS_TYPE = 'dropbox'
 
 
 ################################
@@ -37,7 +25,7 @@ class Storage(BaseStorage):
     DROPBOX_DIRECTORY = '/%s/' % DROPBOX_DIRECTORY.strip('/')
     DBBACKUP_DROPBOX_APP_KEY = getattr(settings, 'DBBACKUP_DROPBOX_APP_KEY', None)
     DBBACKUP_DROPBOX_APP_SECRET = getattr(settings, 'DBBACKUP_DROPBOX_APP_SECRET', None)
-    DBBACKUP_DROPBOX_ACCESS_TYPE = getattr(settings, 'DBBACKUP_DROPBOX_ACCESS_TYPE', None)
+    DBBACKUP_DROPBOX_ACCESS_TYPE = getattr(settings, 'DBBACKUP_DROPBOX_ACCESS_TYPE', DEFAULT_ACCESS_TYPE)
     _request_token = None
     _access_token = None
 
@@ -54,8 +42,6 @@ class Storage(BaseStorage):
             raise StorageError('%s storage requires DBBACKUP_DROPBOX_APP_KEY to be defined in settings.' % self.name)
         if not self.DBBACKUP_DROPBOX_APP_SECRET:
             raise StorageError('%s storage requires DBBACKUP_DROPBOX_APP_SECRET to be specified.' % self.name)
-        if not self.DBBACKUP_DROPBOX_ACCESS_TYPE:
-            raise StorageError('%s storage requires DBBACKUP_DROPBOX_ACCESS_TYPE to be specified.' % self.name)
 
     ###################################
     #  DBBackup Storage Methods
@@ -66,7 +52,7 @@ class Storage(BaseStorage):
 
     def delete_file(self, filepath):
         """ Delete the specified filepath. """
-        response = self.run_dropbox_action(self.dropbox.file_delete, filepath)
+        self.run_dropbox_action(self.dropbox.file_delete, filepath)
 
     def list_directory(self):
         """ List all stored backups for the specified. """
@@ -104,14 +90,13 @@ class Storage(BaseStorage):
         """ Connect and return a Dropbox client object. """
         self.read_token_file()
         sess = session.DropboxSession(self.DBBACKUP_DROPBOX_APP_KEY,
-                                      self.DBBACKUP_DROPBOX_APP_SECRET,
-                                      self.DBBACKUP_DROPBOX_ACCESS_TYPE)
+            self.DBBACKUP_DROPBOX_APP_SECRET, self.DBBACKUP_DROPBOX_ACCESS_TYPE)
         # Get existing or new access token and use it for this session
         access_token = self.get_access_token(sess)
         sess.set_token(access_token.key, access_token.secret)
         dropbox = DropboxClient(sess)
         # Test the connection by making call to get account_info
-        acct_info = dropbox.account_info()
+        dropbox.account_info()
         return dropbox
 
     def get_request_token(self, sess):

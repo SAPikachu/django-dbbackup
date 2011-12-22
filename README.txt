@@ -1,5 +1,5 @@
 =======================
- Django Dropbox Backup
+ Django Database Backup
 =======================
 
 This Django application provides management commands to help backup and
@@ -118,10 +118,8 @@ SETUP YOUR DJANGO PROJECT
 3. Include the required settings below.
    DBBACKUP_STORAGE = 'dbbackup.storage.dropbox_storage'
    DBBACKUP_TOKENS_FILEPATH = '<local_tokens_filepath>'
-   DBBACKUP_DROPBOX_CONFIG = {  # Dropbox API Configuration
-       'consumer_key': '<dropbox_app_key>',
-       'consumer_secret': '<dropbox_app_secret>',
-   }
+   DBBACKUP_DROPBOX_APP_KEY = '<dropbox_app_key>'
+   DBBACKUP_DROPBOX_APP_SECRET = '<dropbox_app_secret>'
 
 4. Now you're ready to use the backup management commands. The first time you
    run a command you'll be prompted to visit a Dropbox URL to allow DBBackup
@@ -136,12 +134,17 @@ DBBACKUP_TOKENS_FILEPATH (required)
     access your website. NOTE: Do not share these keys with anyone you do not
     trust with access to your Dropbox files.
 
-DBBACKUP_DROPBOX_CONFIG (required)
-    Dictionary containing Dropbox API configuration settings. Most of the
-    settings contain defaults that you do not need to worry about. However, the
-    two settings 'consumer_key' & 'consumer_secret' are required. You should
-    refer to the Dropbox API documention to see a list of other settings
-    available.
+DBBACKUP_DROPBOX_APP_KEY
+    Required string containing your Dropbox App Key.
+
+DBBACKUP_DROPBOX_APP_SECRET
+    Required string containing your Dropbox App Secret.
+
+DBBACKUP_DROPBOX_ACCESS_TYPE
+    String containing your Dropbox Access Type. This is either 'dropbox' or
+    'app_folder' depending on the access type specified when creating your
+    application on the Dropbox website. This defaults to 'dropbox', assuming
+    your application has full access to your Dropbox folder.
 
 DBBACKUP_DROPBOX_DIRECTORY (optional)
     The directory in Dropbox you wish to save your backups. By default this is

@@ -134,13 +134,15 @@ DBBACKUP_TOKENS_FILEPATH (required)
     access your website. NOTE: Do not share these keys with anyone you do not
     trust with access to your Dropbox files.
 
-DBBACKUP_DROPBOX_APP_KEY
-    Required string containing your Dropbox App Key.
+DBBACKUP_DROPBOX_APP_KEY (required)
+    Required string containing your Dropbox App Key. NOTE: Do not share these
+    keys with anyone you do not trust with access to your Dropbox files.
 
-DBBACKUP_DROPBOX_APP_SECRET
-    Required string containing your Dropbox App Secret.
+DBBACKUP_DROPBOX_APP_SECRET (required)
+    Required string containing your Dropbox App Secret. NOTE: Do not share these
+    keys with anyone you do not trust with access to your Dropbox files.
 
-DBBACKUP_DROPBOX_ACCESS_TYPE
+DBBACKUP_DROPBOX_ACCESS_TYPE (optional)
     String containing your Dropbox Access Type. This is either 'dropbox' or
     'app_folder' depending on the access type specified when creating your
     application on the Dropbox website. This defaults to 'dropbox', assuming

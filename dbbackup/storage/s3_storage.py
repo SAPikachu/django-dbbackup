@@ -25,8 +25,9 @@ class Storage(BaseStorage):
         self._check_filesystem_errors()
         self.name = 'AmazonS3'
         self.baseurl = self.S3_DOMAIN + aws_urlquote(self.S3_BUCKET)
+        self.secure = self.baseurl[:8] == 'https://'
         self.bucket = StreamingS3Bucket(self.S3_BUCKET, self.S3_ACCESS_KEY,
-            self.S3_SECRET_KEY, base_url=self.baseurl)
+            self.S3_SECRET_KEY, base_url=self.baseurl, secure=self.secure)
         BaseStorage.__init__(self)
 
     def _check_filesystem_errors(self):

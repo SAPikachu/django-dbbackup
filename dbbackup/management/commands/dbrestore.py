@@ -58,6 +58,7 @@ class Command(LabelCommand):
                 raise CommandError("No backup files found in: %s" % self.storage.backup_dir())
             self.filepath = filepaths[-1]
         # Restore the specified filepath backup
+        print "  Found: %s" % self.filepath
         backupfile = self.storage.read_file(self.filepath)
         print "  Restore tempfile created: %s" % utils.handle_size(backupfile)
         self.dbcommands.run_restore_commands(backupfile)

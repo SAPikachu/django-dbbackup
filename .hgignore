@@ -4,4 +4,6 @@ syntax: glob
 *.log
 compressed.r*.js
 static/cache/*
+dist/*
+MANIFEST*
 *.komodoproject

@@ -21,11 +21,12 @@ for dirpath, dirnames, filenames in os.walk(package_dir):
 
 
 setup(name='django-dbbackup',
-    version='1.2',
+    version='1.3',
     description='Management commands to help backup and restore a project database to AmazonS3, Dropbox or local disk.',
     long_description=read('README.txt'),
     author='Michael Shepanski',
     author_email='mjs7231@gmail.com',
+    install_requires=['simples3>=1.0-alpha', 'dropbox>=1.3'],
     license='BSD',
     url='http://bitbucket.org/mjs7231/django-dbbackup',
     keywords = ['django','dropbox','database','backup','amazon','s3'],

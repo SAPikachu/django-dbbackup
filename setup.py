@@ -21,7 +21,7 @@ for dirpath, dirnames, filenames in os.walk(package_dir):
 
 
 setup(name='django-dbbackup',
-    version='0.3',
+    version='1.0',
     description='Django Dropbox Backup',
     long_description=read('README.txt'),
     author='Michael Shepanski',

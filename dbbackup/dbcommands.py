@@ -36,12 +36,12 @@ class MYSQL_SETTINGS:
 class POSTGRESQL_SETTINGS:
     EXTENSION = getattr(settings, 'DBBACKUP_POSTGRESQL_EXTENSION', 'psql')
     BACKUP_COMMANDS = getattr(settings, 'DBBACKUP_POSTGRESQL_BACKUP_COMMANDS', [
-        shlex.split('pg_dump {databasename} >'),
+        shlex.split('pg_dump -p {port} -U {username} {databasename} >'),
     ])
     RESTORE_COMMANDS = getattr(settings, 'DBBACKUP_POSTGRESQL_RESTORE_COMMANDS', [
-        shlex.split('dropdb {databasename}'),
-        shlex.split('createdb {databasename} --owner={username}'),
-        shlex.split('psql -1 {databasename} <'),
+        shlex.split('dropdb -p {port} -U {username} {databasename}'),
+        shlex.split('createdb -p {port} -U {username} {databasename} --owner={username}'),
+        shlex.split('psql -p {port} -U {username} -1 {databasename} <'),
     ])
 
 
@@ -74,7 +74,7 @@ class DBCommands:
     def _get_settings(self):
         """ Returns the proper settings dictionary. """
         if self.engine == 'mysql': return MYSQL_SETTINGS
-        elif self.engine == 'postgresql_psycopg2': return POSTGRESQL_SETTINGS
+        elif self.engine in ('postgresql_psycopg2', 'postgis',): return POSTGRESQL_SETTINGS
         elif self.engine == 'sqlite3': return SQLITE_SETTINGS
 
     def filename(self, servername=None, wildcard=None):
@@ -103,6 +103,7 @@ class DBCommands:
             command[i] = command[i].replace('{username}', self.database['USER'])
             command[i] = command[i].replace('{password}', self.database['PASSWORD'])
             command[i] = command[i].replace('{databasename}', self.database['NAME'])
+            command[i] = command[i].replace('{port}', str(self.database['PORT']))
         return command
 
     def run_backup_commands(self, stdout):

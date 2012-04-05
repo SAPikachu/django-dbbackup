@@ -22,10 +22,10 @@ FILENAME_TEMPLATE = getattr(settings, 'DBBACKUP_FILENAME_TEMPLATE', '{databasena
 class MYSQL_SETTINGS:
     EXTENSION = getattr(settings, 'DBBACKUP_MYSQL_EXTENSION', 'mysql')
     BACKUP_COMMANDS = getattr(settings, 'DBBACKUP_MYSQL_BACKUP_COMMANDS', [
-        shlex.split('mysqldump -u{username} -p{password} {databasename} >'),
+        shlex.split('mysqldump -u{adminuser} -p{password} {databasename} >'),
     ])
     RESTORE_COMMANDS = getattr(settings, 'DBBACKUP_MYSQL_RESTORE_COMMANDS', [
-        shlex.split('mysql -u{username} -p{password} {databasename} <'),
+        shlex.split('mysql -u{adminuser} -p{password} {databasename} <'),
     ])
 
 
@@ -36,12 +36,12 @@ class MYSQL_SETTINGS:
 class POSTGRESQL_SETTINGS:
     EXTENSION = getattr(settings, 'DBBACKUP_POSTGRESQL_EXTENSION', 'psql')
     BACKUP_COMMANDS = getattr(settings, 'DBBACKUP_POSTGRESQL_BACKUP_COMMANDS', [
-        shlex.split('pg_dump -p {port} -U {username} {databasename} >'),
+        shlex.split('pg_dump -p {port} -U {adminuser} {databasename} >'),
     ])
     RESTORE_COMMANDS = getattr(settings, 'DBBACKUP_POSTGRESQL_RESTORE_COMMANDS', [
-        shlex.split('dropdb -p {port} -U {username} {databasename}'),
-        shlex.split('createdb -p {port} -U {username} {databasename} --owner={username}'),
-        shlex.split('psql -p {port} -U {username} -1 {databasename} <'),
+        shlex.split('dropdb -p {port} -U {adminuser} {databasename}'),
+        shlex.split('createdb -p {port} -U {adminuser} {databasename} --owner={username}'),
+        shlex.split('psql -p {port} -U {adminuser} -1 {databasename} <'),
     ])
 
 
@@ -100,7 +100,8 @@ class DBCommands:
         """ Translate the specified command. """
         command = copy.copy(command)
         for i in range(len(command)):
-            command[i] = command[i].replace('{username}', self.database.get('ADMINUSER', self.database['USER']))
+            command[i] = command[i].replace('{adminuser}', self.database.get('ADMINUSER', self.database['USER']))
+            command[i] = command[i].replace('{username}', self.database['USER'])
             command[i] = command[i].replace('{password}', self.database['PASSWORD'])
             command[i] = command[i].replace('{databasename}', self.database['NAME'])
             command[i] = command[i].replace('{port}', str(self.database['PORT']))

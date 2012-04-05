@@ -193,7 +193,7 @@ The following databases are supported by this application. You can customize
 the commands used for backup and the resulting filenames with the following
 settings.
 
-NOTE: The {username} settings below will first check for the variable ADMINUSER
+NOTE: The {adminuser} settings below will first check for the variable ADMINUSER
 specified on the database, then fall back to USER. This allows you supplying a
 different user to perform the admin commands dropdb, createdb as a different
 user from the one django uses to connect.  If you need more fine grain control
@@ -209,13 +209,13 @@ DBBACKUP_MYSQL_BACKUP_COMMANDS (optional)
     List of commands to use execute when creating a backup. Commands are sent
     to popen and should be split into shlex tokens. By default, the following
     command is run:
-    >> mysqldump -u{username} -p{password} {databasename} >
+    >> mysqldump -u{adminuser} -p{password} {databasename} >
 
 DBBACKUP_MYSQL_RESTORE_COMMANDS (optional)
     List of commands to use execute when creating a backup. Commands are sent
     to popen and should be split into shlex tokens. By default, the following
     command is run:
-    >> mysql -u{username} -p{password} {databasename} <
+    >> mysql -u{adminuser} -p{password} {databasename} <
 
 
 POSTGRES
@@ -227,15 +227,15 @@ DBBACKUP_POSTGRES_BACKUP_COMMANDS (optional)
     List of commands to use execute when creating a backup. Commands are sent
     to popen and should be split into shlex tokens. By default, the following
     command is run:
-    >> pg_dump -p {port} -U {username} {databasename} >
+    >> pg_dump -p {port} -U {adminuser} {databasename} >
 
 DBBACKUP_POSTGRES_RESTORE_COMMANDS (optional)
     List of commands to use execute when restoring a backup. Commands are sent
     to popen and should be split into shlex tokens. By default, the following
     commands are run:
-    >> dropdb -p {port} -U {username} {databasename}
-    >> createdb -p {port} -U {username} {databasename} --owner={username}
-    >> psql -p {port} -U {username} -1 {databasename} <
+    >> dropdb -p {port} -U {adminuser} {databasename}
+    >> createdb -p {port} -U {adminuser} {databasename} --owner={username}
+    >> psql -p {port} -U {adminuser} -1 {databasename} <
 
 
 SQLITE

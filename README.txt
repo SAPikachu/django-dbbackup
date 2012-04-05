@@ -221,15 +221,15 @@ DBBACKUP_POSTGRES_BACKUP_COMMANDS (optional)
     List of commands to use execute when creating a backup. Commands are sent
     to popen and should be split into shlex tokens. By default, the following
     command is run:
-    >> pg_dump {databasename} >
+    >> pg_dump -p {port} -U {username} {databasename} >
 
 DBBACKUP_POSTGRES_RESTORE_COMMANDS (optional)
     List of commands to use execute when restoring a backup. Commands are sent
     to popen and should be split into shlex tokens. By default, the following
     commands are run:
-    >> dropdb {databasename}
-    >> createdb {databasename} --owner={username}
-    >> psql -1 {databasename} <
+    >> dropdb -p {port} -U {username} {databasename}
+    >> createdb -p {port} -U {username} {databasename} --owner={username}
+    >> psql -p {port} -U {username} -1 {databasename} <
 
 
 SQLITE

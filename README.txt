@@ -193,6 +193,12 @@ The following databases are supported by this application. You can customize
 the commands used for backup and the resulting filenames with the following
 settings.
 
+NOTE: The {username} settings below will first check for the variable ADMINUSER
+specified on the database, then fall back to USER. This allows you supplying a
+different user to perform the admin commands dropdb, createdb as a different
+user from the one django uses to connect.  If you need more fine grain control
+you might consider fully customizing the admin commands.
+
 
 MYSQL
 -----

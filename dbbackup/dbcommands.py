@@ -100,7 +100,7 @@ class DBCommands:
         """ Translate the specified command. """
         command = copy.copy(command)
         for i in range(len(command)):
-            command[i] = command[i].replace('{username}', self.database['USER'])
+            command[i] = command[i].replace('{username}', self.database.get('ADMINUSER', self.database['USER']))
             command[i] = command[i].replace('{password}', self.database['PASSWORD'])
             command[i] = command[i].replace('{databasename}', self.database['NAME'])
             command[i] = command[i].replace('{port}', str(self.database['PORT']))

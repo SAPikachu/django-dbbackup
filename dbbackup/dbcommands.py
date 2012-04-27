@@ -79,12 +79,24 @@ class DBCommands:
 
     def filename(self, servername=None, wildcard=None):
         """ Create a new backup filename. """
-        datestr = wildcard or datetime.now().strftime(DATE_FORMAT)
-        filename = FILENAME_TEMPLATE.replace('{databasename}', self.database['NAME'])
-        filename = filename.replace('{servername}', servername or SERVER_NAME)
-        filename = filename.replace('{datetime}', datestr)
-        filename = filename.replace('{extension}', self.settings.EXTENSION)
-        filename = filename.replace('--', '-')
+        params = {
+            'databasename': self.database['NAME'],
+            'servername': servername or SERVER_NAME,
+            'timestamp': datetime.now(),
+            'extension': self.settings.EXTENSION,
+            'wildcard': wildcard,
+        }
+        if callable(FILENAME_TEMPLATE):
+            filename = FILENAME_TEMPLATE(**params)
+        else:
+            params['datetime'] = wildcard or params['timestamp'].strftime(DATE_FORMAT)
+            # if Python 2.6 is okay, this line can replace the 4 below it:
+            # filename = FILENAME_TEMPLATE.format(**params)
+            filename = FILENAME_TEMPLATE
+            for key, value in params.iteritems():
+                if value is not None:
+                    filename = filename.replace('{%s}' % key, value)
+            filename = filename.replace('--', '-')
         return filename
 
     def filename_match(self, servername=None, wildcard='*'):

@@ -94,8 +94,7 @@ class DBCommands:
             # filename = FILENAME_TEMPLATE.format(**params)
             filename = FILENAME_TEMPLATE
             for key, value in params.iteritems():
-                if value is not None:
-                    filename = filename.replace('{%s}' % key, value)
+                filename = filename.replace('{%s}' % key, unicode(value))
             filename = filename.replace('--', '-')
         return filename
 

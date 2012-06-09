@@ -284,6 +284,10 @@ DBBACKUP_STORAGE (required)
     backup. You can see the exact definitions to use in the required settings
     for the backup location of your choice above.
 
+DBBACKUP_SEND_EMAIL (optional)
+    Controls whether or not django-dbbackup sends an error email when an
+    uncaught exception is received. This is ``True`` by default.
+
 DBBACKUP_DATE_FORMAT (optional)
     The Python datetime format to use when generating the backup filename. By
     default this is '%Y-%m-%d-%H%M%S'.
@@ -296,4 +300,13 @@ DBBACKUP_SERVER_NAME (optional)
 
 DBBACKUP_FILENAME_TEMPLATE (optional)
     The template to use when generating the backup filename. By default this is
-    '{databasename}-{servername}-{datetime}.{extension}'.
+    '{databasename}-{servername}-{datetime}.{extension}'. This setting can
+    also be made a method which takes the following keyword arguments:
+
+    def backup_filename(databasename, servername, timestamp, extension, wildcard):
+        pass
+
+    This allows you to modify the entire format of the filename based on the
+    time of day, week, or month.  For example, if you want to take advantage of
+    Amazon S3's automatic expiry feature, you need to prefix your backups
+    differently based on when you want them to expire.

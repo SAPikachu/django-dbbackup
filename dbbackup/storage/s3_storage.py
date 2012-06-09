@@ -25,8 +25,6 @@ class Storage(BaseStorage):
         self._check_filesystem_errors()
         self.name = 'AmazonS3'
         self.baseurl = self.S3_DOMAIN + aws_urlquote(self.S3_BUCKET)
-        self.bucket = StreamingS3Bucket(self.S3_BUCKET, self.S3_ACCESS_KEY,
-            self.S3_SECRET_KEY, base_url=self.baseurl)
         BaseStorage.__init__(self)
 
     def _check_filesystem_errors(self):
@@ -41,6 +39,11 @@ class Storage(BaseStorage):
     ###################################
     #  DBBackup Storage Methods
     ###################################
+
+    @property
+    def bucket(self):
+        return StreamingS3Bucket(self.S3_BUCKET, self.S3_ACCESS_KEY,
+            self.S3_SECRET_KEY, base_url=self.baseurl)
 
     def backup_dir(self):
         return self.S3_DIRECTORY

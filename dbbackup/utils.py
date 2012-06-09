@@ -49,15 +49,16 @@ def email_uncaught_exception(func):
         try:
             func(*args, **kwargs)
         except:
-            excType, excValue, traceback = sys.exc_info()
-            reporter = ExceptionReporter(FAKE_HTTP_REQUEST, excType, excValue, traceback.tb_next)
-            subject = "Cron: Uncaught exception running %s" % module
-            body = reporter.get_traceback_html()
-            msgFrom = settings.SERVER_EMAIL
-            msgTo = [admin[1] for admin in settings.ADMINS]
-            message = EmailMessage(subject, body, msgFrom, msgTo)
-            message.content_subtype = 'html'
-            message.send(fail_silently=True)
+            if getattr(settings, 'DBBACKUP_SEND_EMAIL', True):
+                excType, excValue, traceback = sys.exc_info()
+                reporter = ExceptionReporter(FAKE_HTTP_REQUEST, excType, excValue, traceback.tb_next)
+                subject = "Cron: Uncaught exception running %s" % module
+                body = reporter.get_traceback_html()
+                msgFrom = settings.SERVER_EMAIL
+                msgTo = [admin[1] for admin in settings.ADMINS]
+                message = EmailMessage(subject, body, msgFrom, msgTo)
+                message.content_subtype = 'html'
+                message.send(fail_silently=True)
             raise
         finally:
             connection.close()

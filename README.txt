@@ -284,6 +284,10 @@ DBBACKUP_STORAGE (required)
     backup. You can see the exact definitions to use in the required settings
     for the backup location of your choice above.
 
+DBBACKUP_SEND_EMAIL (optional)
+    Controls whether or not django-dbbackup sends an error email when an
+    uncaught exception is received. This is ``True`` by default.
+
 DBBACKUP_DATE_FORMAT (optional)
     The Python datetime format to use when generating the backup filename. By
     default this is '%Y-%m-%d-%H%M%S'.

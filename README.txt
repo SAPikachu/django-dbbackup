@@ -296,4 +296,13 @@ DBBACKUP_SERVER_NAME (optional)
 
 DBBACKUP_FILENAME_TEMPLATE (optional)
     The template to use when generating the backup filename. By default this is
-    '{databasename}-{servername}-{datetime}.{extension}'.
+    '{databasename}-{servername}-{datetime}.{extension}'. This setting can
+    also be made a method which takes the following keyword arguments:
+
+    def backup_filename(databasename, servername, timestamp, extension, wildcard):
+        pass
+
+    This allows you to modify the entire format of the filename based on the
+    time of day, week, or month.  For example, if you want to take advantage of
+    Amazon S3's automatic expiry feature, you need to prefix your backups
+    differently based on when you want them to expire.

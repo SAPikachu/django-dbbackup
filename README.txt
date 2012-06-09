@@ -181,7 +181,7 @@ SETUP YOUR DJANGO PROJECT
 2. Add 'dbbackup' to INSTALLED_APPS in your settings.py file.
 
 3. Include the required settings below.
-   DBBACKUP_STORAGE = 'dbbackup.storage.filesystem'
+   DBBACKUP_STORAGE = 'dbbackup.storage.filesystem_storage'
    DBBACKUP_FILESYSTEM_DIRECTORY = '<local_directory_path>'
 
 4. Now you're ready to use the backup management commands.

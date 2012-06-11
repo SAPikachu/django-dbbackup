@@ -10,7 +10,7 @@ from django.conf import settings
 from dropbox.client import DropboxClient
 from dropbox import session
 
-DEFAULT_ACCESS_TYPE = 'dropbox'
+DEFAULT_ACCESS_TYPE = 'app_folder'
 
 
 ################################
@@ -145,7 +145,7 @@ class Storage(BaseStorage):
         """ Save the request and access tokens to disk. """
         tokendata = dict(request_token=self._request_token, access_token=self._access_token)
         with open(self.TOKENS_FILEPATH, 'wb') as tokenhandle:
-            pickle.dump(tokendata, tokenhandle)
+            pickle.dump(tokendata, tokenhandle, -1)
 
     def read_token_file(self):
         """ Reload the request and/or access tokens from disk. """

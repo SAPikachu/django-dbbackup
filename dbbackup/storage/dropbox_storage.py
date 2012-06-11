@@ -144,6 +144,7 @@ class Storage(BaseStorage):
     def save_token_file(self):
         """ Save the request and access tokens to disk. """
         tokendata = dict(request_token=self._request_token, access_token=self._access_token)
+        print "tokendata: %s (type: %s)" % (tokendata, type(tokendata))
         with open(self.TOKENS_FILEPATH, 'wb') as tokenhandle:
             pickle.dump(tokendata, tokenhandle, -1)
 

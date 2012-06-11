@@ -2,5 +2,6 @@ Primary Authors:
   * Michael Shepanski
 
 Contributors:
+  * Hannes Hapke
   * Toumhi (Bitbucket)
   * Tobias McNulty

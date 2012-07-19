@@ -55,14 +55,20 @@ class Storage(BaseStorage):
 
     def delete_file(self, filepath):
         """ Delete the specified filepath. """
-        self.run_dropbox_action(self.dropbox.file_delete, filepath)
+        files = self.list_directory(raw=True)
+        to_be_deleted = [x for x in files if os.path.splitext(x)[0] == filepath]
 
-    def list_directory(self):
+        for name in to_be_deleted:
+            self.run_dropbox_action(self.dropbox.file_delete, name)
+
+    def list_directory(self, raw=False):
         """ List all stored backups for the specified. """
         metadata = self.run_dropbox_action(self.dropbox.metadata, self.DROPBOX_DIRECTORY)
         filepaths = [x['path'] for x in metadata['contents'] if not x['is_dir']]
-        filepaths = [os.path.splitext(x)[0] for x in filepaths]
-        filepaths = list(set(filepaths))
+        if not raw:
+            filepaths = [os.path.splitext(x)[0] for x in filepaths]
+            filepaths = list(set(filepaths))
+
         return sorted(filepaths)
 
     def get_numbered_path(self, path, number):

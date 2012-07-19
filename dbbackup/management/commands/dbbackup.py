@@ -46,7 +46,7 @@ class Command(LabelCommand):
     def save_new_backup(self, database):
         """ Save a new backup file. """
         print "Backing Up Database: %s" % database['NAME']
-        backupfile = tempfile.SpooledTemporaryFile()
+        backupfile = tempfile.SpooledTemporaryFile(max_size=10*1024*1024)
         backupfile.name = self.dbcommands.filename(self.servername)
         self.dbcommands.run_backup_commands(backupfile)
         print "  Backup tempfile created: %s (%s)" % (backupfile.name, utils.handle_size(backupfile))

@@ -4,6 +4,7 @@ Dropbox API Storage object.
 import pickle
 import os
 import tempfile
+from shutil import copyfileobj
 from .base import BaseStorage, StorageError
 from dropbox.rest import ErrorResponse
 from django.conf import settings
@@ -12,6 +13,8 @@ from dropbox import session
 
 DEFAULT_ACCESS_TYPE = 'app_folder'
 
+MAX_SPOOLED_SIZE = 10 * 1024 * 1024
+FILE_SIZE_LIMIT = 145 * 1024 * 1024
 
 ################################
 #  Dropbox Storage Object
@@ -60,24 +63,72 @@ class Storage(BaseStorage):
         filepaths = [x['path'] for x in metadata['contents'] if not x['is_dir']]
         return sorted(filepaths)
 
+    def get_numbered_path(self, path, number):
+        return "{}.{}".format(path, number)
+
     def write_file(self, filehandle):
         """ Write the specified file. """
         filehandle.seek(0)
+        total_files = 0
         path = os.path.join(self.DROPBOX_DIRECTORY, filehandle.name)
-        self.run_dropbox_action(self.dropbox.put_file, path, filehandle)
+        eof = False
+        while not eof:
+            with tempfile.SpooledTemporaryFile(max_size=MAX_SPOOLED_SIZE) as t:
+                while True:
+                    data = filehandle.read(16384)
+                    if not data:
+                        eof = True
+                        break
+
+                    t.write(data)
+                    if t.tell() >= FILE_SIZE_LIMIT:
+                        break
+
+                if t.tell() > 0:
+                    t.seek(0)
+                    self.run_dropbox_action(
+                        self.dropbox.put_file, 
+                        self.get_numbered_path(path, total_files), 
+                        t,
+                    )
+                    total_files += 1
 
     def read_file(self, filepath):
         """ Read the specified file and return it's handle. """
-        response = self.run_dropbox_action(self.dropbox.get_file, filepath)
-        filehandle = tempfile.SpooledTemporaryFile()
-        filehandle.write(response.read())
+        total_files = 0
+        filehandle = tempfile.SpooledTemporaryFile(max_size=MAX_SPOOLED_SIZE)
+        try:
+            def handle_error_response(e):
+                return e.status == 404 and total_files > 0
+
+            while True:
+                response = self.run_dropbox_action(
+                    self.dropbox.get_file, 
+                    self.get_numbered_path(filepath, total_files),
+                    error_handler = handle_error_response,
+                )
+                if response == True:
+                    break
+
+                copyfileobj(response, filehandle)
+                total_files += 1
+
+        except:
+            filehandle.close()
+            raise
+
         return filehandle
 
     def run_dropbox_action(self, method, *args, **kwargs):
         """ Check we have a valid 200 response from Dropbox. """
+        error_handler = kwargs.pop("error_handler", lambda e: False)
         try:
             response = method(*args, **kwargs)
         except ErrorResponse, e:
+            handler_result = error_handler(e)
+            if handler_result:
+                return handler_result
+
             errmsg = "ERROR %s" % (e,)
             raise StorageError(errmsg)
         return response

@@ -6,6 +6,7 @@ from datetime import datetime
 from django.conf import settings
 from django.core.management.base import CommandError
 from subprocess import Popen
+from shutil import copyfileobj
 
 
 READ_FILE = '<READ_FILE>'
@@ -151,11 +152,12 @@ class DBCommands:
     def read_file(self, filepath, stdout):
         """ Read the specified file to stdout. """
         print "  Reading: %s" % filepath
-        stdout.write(open(filepath, 'r').read())
+        with open(filepath, "rb") as f:
+            copyfileobj(f, stdout)
 
     def write_file(self, filepath, stdin):
         """ Write the specified file from stdin. """
         print "  Writing: %s" % filepath
-        writehandle = open(filepath, 'w')
-        writehandle.write(stdin.read())
-        writehandle.close()
+        with open(filepath, 'wb') as f:
+            copyfileobj(stdin, f)
+

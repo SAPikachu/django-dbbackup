@@ -81,7 +81,7 @@ class DBCommands:
     def filename(self, servername=None, wildcard=None):
         """ Create a new backup filename. """
         params = {
-            'databasename': self.database['NAME'],
+            'databasename': self.database['NAME'].replace("/", "_"),
             'servername': servername or SERVER_NAME,
             'timestamp': datetime.now(),
             'extension': self.settings.EXTENSION,

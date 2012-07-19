@@ -61,6 +61,8 @@ class Storage(BaseStorage):
         """ List all stored backups for the specified. """
         metadata = self.run_dropbox_action(self.dropbox.metadata, self.DROPBOX_DIRECTORY)
         filepaths = [x['path'] for x in metadata['contents'] if not x['is_dir']]
+        filepaths = [os.path.splitext(x)[0] for x in filepaths]
+        filepaths = list(set(filepaths))
         return sorted(filepaths)
 
     def get_numbered_path(self, path, number):
@@ -72,7 +74,7 @@ class Storage(BaseStorage):
         total_files = 0
         path = os.path.join(
             self.DROPBOX_DIRECTORY, 
-            filehandle.name.replace("/", "_"),
+            filehandle.name,
         )
         eof = False
         while not eof:

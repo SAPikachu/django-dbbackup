@@ -70,7 +70,10 @@ class Storage(BaseStorage):
         """ Write the specified file. """
         filehandle.seek(0)
         total_files = 0
-        path = os.path.join(self.DROPBOX_DIRECTORY, filehandle.name)
+        path = os.path.join(
+            self.DROPBOX_DIRECTORY, 
+            filehandle.name.replace("/", "_"),
+        )
         eof = False
         while not eof:
             with tempfile.SpooledTemporaryFile(max_size=MAX_SPOOLED_SIZE) as t:

@@ -2,6 +2,7 @@
 S3 Storage object.
 """
 import os, tempfile, sys
+from shutil import copyfileobj
 from .base import BaseStorage, StorageError
 from django.conf import settings
 from simples3.streaming import StreamingS3Bucket
@@ -64,6 +65,6 @@ class Storage(BaseStorage):
     def read_file(self, filepath):
         """ Read the specified file and return it's handle. """
         response = self.bucket.get(filepath)
-        filehandle = tempfile.SpooledTemporaryFile()
-        filehandle.write(response.read())
+        filehandle = tempfile.SpooledTemporaryFile(max_size=10*1024*1024)
+        copyfileobj(response, filehandle)
         return filehandle

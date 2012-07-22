@@ -114,16 +114,13 @@ class Storage(BaseStorage):
         total_files = 0
         filehandle = tempfile.SpooledTemporaryFile(max_size=MAX_SPOOLED_SIZE)
         try:
-            def handle_error_response(e):
-                return e.status == 404 and total_files > 0
-
             while True:
                 response = self.run_dropbox_action(
                     self.dropbox.get_file, 
                     self.get_numbered_path(filepath, total_files),
-                    error_handler = handle_error_response,
+                    ignore_404=(total_files > 0),
                 )
-                if response == True:
+                if not response:
                     break
 
                 copyfileobj(response, filehandle)
@@ -137,13 +134,12 @@ class Storage(BaseStorage):
 
     def run_dropbox_action(self, method, *args, **kwargs):
         """ Check we have a valid 200 response from Dropbox. """
-        error_handler = kwargs.pop("error_handler", lambda e: False)
+        ignore_404 = kwargs.pop("ignore_404", False)
         try:
             response = method(*args, **kwargs)
         except ErrorResponse, e:
-            handler_result = error_handler(e)
-            if handler_result:
-                return handler_result
+            if ignore_404 and e.status == 404:
+                return None
 
             errmsg = "ERROR %s" % (e,)
             raise StorageError(errmsg)

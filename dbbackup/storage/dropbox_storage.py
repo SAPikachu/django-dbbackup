@@ -74,6 +74,25 @@ class Storage(BaseStorage):
     def get_numbered_path(self, path, number):
         return "{}.{}".format(path, number)
 
+    @staticmethod
+    def chunked_file(filehandle, chunk_size=FILE_SIZE_LIMIT):
+        eof = False
+        while not eof:
+            with tempfile.SpooledTemporaryFile(max_size=MAX_SPOOLED_SIZE) as t:
+                chunk_space = chunk_size
+                while chunk_space > 0:
+                    data = filehandle.read(min(16384, chunk_space))
+                    if not data:
+                        eof = True
+                        break
+
+                    chunk_space -= len(data)
+                    t.write(data)
+
+                if t.tell() > 0:
+                    t.seek(0)
+                    yield t
+
     def write_file(self, filehandle):
         """ Write the specified file. """
         filehandle.seek(0)
@@ -82,27 +101,13 @@ class Storage(BaseStorage):
             self.DROPBOX_DIRECTORY, 
             filehandle.name,
         )
-        eof = False
-        while not eof:
-            with tempfile.SpooledTemporaryFile(max_size=MAX_SPOOLED_SIZE) as t:
-                while True:
-                    data = filehandle.read(16384)
-                    if not data:
-                        eof = True
-                        break
-
-                    t.write(data)
-                    if t.tell() >= FILE_SIZE_LIMIT:
-                        break
-
-                if t.tell() > 0:
-                    t.seek(0)
-                    self.run_dropbox_action(
-                        self.dropbox.put_file, 
-                        self.get_numbered_path(path, total_files), 
-                        t,
-                    )
-                    total_files += 1
+        for chunk in self.chunked_file(filehandle):
+            self.run_dropbox_action(
+                self.dropbox.put_file, 
+                self.get_numbered_path(path, total_files), 
+                chunk,
+            )
+            total_files += 1
 
     def read_file(self, filepath):
         """ Read the specified file and return it's handle. """
